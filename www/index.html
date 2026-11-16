@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guardaroba – il tuo armadio virtuale</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#faf6f1;--card:#fff;--tx:#2a2420;--mu:#7a6f66;--ac:#8a4b5a;--ac2:#f1e4e6;--bd:#e6ddd3;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1917;--card:#2a2522;--tx:#f3ece6;--mu:#a99d93;--ac:#d98ba0;--ac2:#3b2a30;--bd:#3d3631;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1d1917;--card:#2a2522;--tx:#f3ece6;--mu:#a99d93;--ac:#d98ba0;--ac2:#3b2a30;--bd:#3d3631;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Georgia,'Times New Roman',serif;line-height:1.45}
+.w{max-width:640px;margin:0 auto;padding:16px 16px 90px}
+h1{font-size:26px;margin:8px 0 2px}h2{font-size:20px;margin:18px 0 8px}
+p.s{color:var(--mu);margin:0 0 14px;font-family:system-ui,sans-serif;font-size:14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin:10px 0}
+label{display:block;font:600 14px system-ui,sans-serif;margin:12px 0 6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:14px system-ui,sans-serif;padding:8px 14px;border:1px solid var(--bd);border-radius:99px;background:var(--card);color:var(--tx);cursor:pointer}
+.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+button.p{background:var(--ac);color:#fff;border:0;border-radius:12px;padding:12px 18px;font:600 15px system-ui,sans-serif;cursor:pointer;width:100%;margin-top:14px}
+button.g{background:var(--ac2);color:var(--ac);border:0;border-radius:10px;padding:8px 12px;font:600 13px system-ui,sans-serif;cursor:pointer}
+select,input[type=text]{width:100%;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font:15px system-ui,sans-serif}
+.sw{display:inline-block;width:26px;height:26px;border-radius:50%;border:1px solid var(--bd);margin-right:4px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.it{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--bd);background:var(--card)}
+.it img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}
+.it .t{font:11px system-ui,sans-serif;padding:4px 6px;display:flex;align-items:center;gap:4px}
+.it .x{position:absolute;top:4px;right:4px;background:#000a;color:#fff;border:0;border-radius:50%;width:22px;height:22px;cursor:pointer}
+.out{display:flex;gap:6px;overflow-x:auto}
+.out figure{margin:0;flex:0 0 28%;font:11px system-ui,sans-serif;text-align:center;color:var(--mu)}
+.out img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:10px;border:1px solid var(--bd)}
+.score{font:700 13px system-ui,sans-serif;color:var(--ac)}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--bd);display:flex;justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom,0px))}
+nav button{background:none;border:0;color:var(--mu);font:600 12px system-ui,sans-serif;padding:6px 10px;cursor:pointer}
+nav button.on{color:var(--ac)}
+.hide{display:none}
+a.l{display:block;padding:12px;border:1px solid var(--bd);border-radius:12px;margin:8px 0;color:var(--ac);text-decoration:none;font:600 14px system-ui,sans-serif}
+:root,:root:not([data-theme=light]),:root[data-theme=dark]{--bg:#fff;--card:#fff;--tx:#3b2f33;--mu:#8a7a80;--ac:#e8c1c8;--ac2:#e0eef8;--bd:#f0e0e4;color-scheme:light}
+body{background:linear-gradient(#fff,#fdf5f6) fixed}.w{max-width:960px}
+button.p{color:#4a2f36;background:#e8c1c8}.chip.on{background:#e8c1c8;color:#4a2f36;border-color:#d99aa6}
+button.g{color:#35566f;background:#e0eef8}.score,nav button.on{color:#b86b7a}a.l{color:#35566f}nav{justify-content:center;gap:14px}
+#res{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+@media(min-width:700px){.grid{grid-template-columns:repeat(5,1fr)}}
+</style>
+</head>
+<body>
+<div class="w" id="app"></div>
+<nav id="nav" class="hide"></nav>
+<script>
+const PAL={
+ Primavera:{d:'Caldi, chiari e luminosi',c:['#f6e3c4','#f4a97f','#f0c75e','#8fc47a','#4fb3a5','#e8715f','#c9a46a','#fff7e6']},
+ Estate:{d:'Freddi, morbidi e polverosi',c:['#c9b8d9','#e5b4c3','#9fb7d4','#a9c7c0','#d7c6d2','#8d9bb5','#c58aa0','#f3eef2']},
+ Autunno:{d:'Caldi, profondi e terrosi',c:['#a65a2e','#c58b3a','#6f7a3a','#7a3b2b','#d4a373','#3f5b4a','#8b5e3c','#f0e0c0']},
+ Inverno:{d:'Freddi, intensi e netti',c:['#101820','#ffffff','#c2185b','#1e3a8a','#0f766e','#6d28d9','#b91c1c','#9ca3af']}
+};
+const STYLES=['Classico','Elegante','Casual','Minimal','Boho','Sportivo','Modest chic','Streetwear'];
+const OCC=['Quotidiano','Lavoro','Cerimonia','Sera','Università','Estate/mare'];
+const CATS=['Top','Pantaloni/Gonna','Abito/Abaya','Giacca/Cardigan','Hijab','Scarpe'];
+let S={prof:null,items:[]};
+let tab='home',res=[],occ='Quotidiano';
+try{const r=localStorage.getItem('guardaroba_v1');if(r)S=JSON.parse(r)}catch(e){}
+function save(){try{localStorage.setItem('guardaroba_v1',JSON.stringify(S))}catch(e){alert('Memoria piena: elimina qualche foto.')}}
+// colori
+const h2r=h=>[1,3,5].map(i=>parseInt(h.substr(i,2),16));
+const r2h=(r,g,b)=>'#'+[r,g,b].map(v=>Math.round(v).toString(16).padStart(2,'0')).join('');
+function hsl(h){let [r,g,b]=h2r(h).map(v=>v/255);const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,d=mx-mn;let H=0,Sx=0;
+ if(d){Sx=d/(1-Math.abs(2*l-1));H=mx==r?((g-b)/d)%6:mx==g?(b-r)/d+2:(r-g)/d+4;H=(H*60+360)%360}return{h:H,s:Sx,l}}
+const neutral=h=>{const c=hsl(h);return c.s<.18||c.l<.12||c.l>.93};
+const dist=(a,b)=>{const x=h2r(a),y=h2r(b);return Math.hypot(x[0]-y[0],x[1]-y[1],x[2]-y[2])};
+function palFit(h){const p=palC(S.prof);const m=Math.min(...p.map(c=>dist(h,c)));return Math.max(0,1-m/200)}
+function pair(a,b){if(neutral(a)||neutral(b)){const l=Math.abs(hsl(a).l-hsl(b).l);return .8+Math.min(.2,l/3)}
+ let d=Math.abs(hsl(a).h-hsl(b).h);d=d>180?360-d:d;
+ if(d<25)return .85;if(d<50)return .9;if(d>150)return .8;if(d>100&&d<140)return .6;return .4}
+function score(its){let ps=[],n=0,hues=new Set();
+ for(let i=0;i<its.length;i++)for(let j=i+1;j<its.length;j++)ps.push(pair(its[i].color,its[j].color));
+ const harm=ps.reduce((a,b)=>a+b,0)/(ps.length||1);
+ let w=0,f=0;its.forEach(i=>{const k=i.cat=='Hijab'?2.5:1;w+=k;f+=k*palFit(i.color);if(!neutral(i.color))hues.add(Math.round(hsl(i.color).h/40))});
+ let sc=.45*harm+.55*(f/w);if(hues.size>3)sc-=.15;return Math.max(0,Math.min(1,sc))}
+function why(its,sc){const hj=its.find(i=>i.cat=='Hijab');const nn=its.filter(i=>!neutral(i.color)).length;let t=[];
+ if(hj)t.push(palFit(hj.color)>.7?'l\'hijab è in palette e illumina il viso':'hijab vicino alla tua palette');
+ t.push(nn==0?'look neutro e raffinato':nn==1?'un solo colore protagonista con neutri':nn==2?'due colori armonizzati':'più colori bilanciati');
+ return t.join(' · ')}
+function genOutfits(){
+ const by=c=>S.items.filter(i=>i.cat==c);const hij=S.prof.hijab;
+ const tops=by('Top'),bot=by('Pantaloni/Gonna'),dr=by('Abito/Abaya'),jk=by('Giacca/Cardigan'),hj=by('Hijab'),sh=by('Scarpe');
+ const bases=[];dr.forEach(d=>bases.push([d]));tops.forEach(t=>bot.forEach(b=>bases.push([t,b])));
+ const list=[];
+ bases.forEach(b=>{const hs=hij&&hj.length?hj:[null];hs.forEach(h=>{
+  [null,...jk].forEach(j=>{[null,...sh].forEach(s=>{
+   const o=[...b,h,j,s].filter(Boolean);if(o.length<2)return;
+   const useJ=j&&(occ=='Cerimonia'||occ=='Lavoro'||Math.random()<.5);
+   const o2=useJ?o:o.filter(x=>x!==j);
+   list.push({its:o2,sc:score(o2)+Math.random()*.03});
+  })})})});
+ const seen=new Set(),outs=[];list.sort((a,b)=>b.sc-a.sc).forEach(o=>{const k=o.its.map(i=>i.id).join();if(!seen.has(k)&&outs.length<6){seen.add(k);outs.push(o)}});
+ res=outs}
+// UI
+const $=s=>document.querySelector(s);
+function chips(id,arr,sel,multi){return `<div class="chips" id="${id}">`+arr.map(a=>`<button type="button" class="chip ${sel.includes(a)?'on':''}" data-v="${a}" data-m="${multi?1:0}">${a}</button>`).join('')+'</div>'}
+function render(){
+ if(!S.prof){onboard();return}
+ $('#nav').className='';$('#nav').innerHTML=[['home','Outfit'],['wardrobe','Armadio'],['insp','Ispirazione'],['prof','Profilo']].map(([k,l])=>`<button class="${tab==k?'on':''}" onclick="tab='${k}';render()">${l}</button>`).join('');
+ ({home,wardrobe,insp,prof})[tab]();window.scrollTo(0,0)}
+let ob={season:'',sub:'',styles:[],occ:[],hijab:true,under:'',contrast:''};
+function onboard(){
+ $('#nav').className='hide';
+ $('#app').innerHTML=`<h1>Benvenuta ✨</h1><p class="s">Poche domande per creare outfit su misura per te.</p>
+ <div class="card"><label>La tua palette di armocromia</label>${chips('c-season',Object.keys(PAL),[ob.season],0)}
+ <p class="s" style="margin-top:8px">${ob.season?PAL[ob.season].d:'Scegli la tua stagione. Non la conosci? Rispondi qui sotto.'}</p>
+ <div id="sw">${ob.season?palC(ob).map(c=>`<span class="sw" style="background:${c}"></span>`).join(''):''}</div>
+ ${ob.season?'<label>Sfumatura (le 12 stagioni)</label>'+chips('c-sub',SUBS[ob.season],[ob.sub],0):''}<div id="quiz" class="${ob.season?'hide':''}"><label>Quali metalli/colori ti donano di più?</label>${chips('c-und',['Oro e colori caldi','Argento e colori freddi'],[ob.under],0)}
+ <label>I tuoi colori naturali (pelle, occhi, capelli) sono…</label>${chips('c-con',['Chiari e delicati','Scuri e intensi'],[ob.contrast],0)}
+ <button class="g" style="margin-top:10px" id="calc">Suggeriscimi la stagione</button></div></div>
+ <div class="card"><label>Il tuo stile (anche più di uno)</label>${chips('c-st',STYLES,ob.styles,1)}
+ <label>Per quali occasioni?</label>${chips('c-oc',OCC,ob.occ,1)}
+ <label>Indossi l'hijab?</label>${chips('c-hj',['Sì, sempre','Dipende dall\'outfit','No'],[ob.hijab===true?'Sì, sempre':ob.hijab==='x'?'Dipende dall\'outfit':ob.hijab===false?'No':''],0)}</div>
+ <button class="p" id="go">Inizia</button>`;
+ bindChips()}
+function bindChips(){document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{
+ const id=b.parentNode.id,v=b.dataset.v;
+ if(id=='c-season'){ob.season=v;ob.sub=''}if(id=='c-sub')ob.sub=v;if(id=='c-und')ob.under=v;if(id=='c-con')ob.contrast=v;
+ if(id=='c-st')ob.styles=tg(ob.styles,v);if(id=='c-oc')ob.occ=tg(ob.occ,v);
+ if(id=='c-hj')ob.hijab=v.startsWith('Sì')?true:v.startsWith('Dip')?'x':false;
+ onboard()});
+ const c=$('#calc');if(c)c.onclick=()=>{if(!ob.under||!ob.contrast){alert('Rispondi a entrambe le domande');return}
+  const w=ob.under.startsWith('Oro'),l=ob.contrast.startsWith('Chiari');ob.season=w?(l?'Primavera':'Autunno'):(l?'Estate':'Inverno');onboard()};
+ const g=$('#go');if(g)g.onclick=()=>{if(!ob.season){alert('Scegli una palette');return}
+  S.prof={season:ob.season,sub:ob.sub,styles:ob.styles.length?ob.styles:['Casual'],occ:ob.occ,hijab:ob.hijab!==false};save();render()}}
+const tg=(a,v)=>a.includes(v)?a.filter(x=>x!=v):[...a,v];
+function thumb(i){return `<figure><img src="${i.img}" alt="${i.cat}"><span>${i.cat.split('/')[0]}</span></figure>`}
+function home(){
+ const n=S.items.length;
+ $('#app').innerHTML=`<h1>I tuoi outfit</h1><p class="s">Palette ${S.prof.season} · ${S.prof.styles.join(', ')}</p>
+ <div class="card"><label style="margin-top:0">Per quale occasione?</label><select id="occ">${OCC.map(o=>`<option ${o==occ?'selected':''}>${o}</option>`).join('')}</select>
+ <button class="p" id="gen">Crea i miei outfit</button></div>
+ <div id="res">${n<3?'<div class="card">Aggiungi almeno un top + un pantalone/gonna (o un abito) nella sezione <b>Armadio</b> per iniziare.</div>':''}</div>`;
+ $('#occ').onchange=e=>occ=e.target.value;
+ $('#gen').onclick=()=>{genOutfits();show()};if(res.length)show()}
+function show(){
+ $('#res').innerHTML=res.length?res.map(o=>`<div class="card"><div class="out">${o.its.map(thumb).join('')}</div>
+ <p style="margin:10px 0 0"><span class="score">Compatibilità ${Math.round(o.sc*100)}%</span><br><span class="s">${why(o.its,o.sc)}</span></p></div>`).join(''):'<div class="card">Servono più capi: aggiungi top e pantaloni/gonne oppure abiti.</div>'}
+function wardrobe(){
+ $('#app').innerHTML=`<h1>Il mio armadio</h1><p class="s">${S.items.length} capi · il colore viene rilevato dalla foto (puoi correggerlo).</p>
+ <div class="card"><label style="margin-top:0">Categoria</label><select id="cat">${CATS.map(c=>`<option>${c}</option>`).join('')}</select>
+ <input type="file" id="f" accept="image/*" multiple class="hide"><button class="p" onclick="document.getElementById('f').click()">📷 Carica foto</button></div>
+ <div class="grid" id="gr">${S.items.map(i=>`<div class="it"><img src="${i.img}" alt=""><button class="x" onclick="del('${i.id}')">×</button>
+ <div class="t"><input type="color" value="${i.color}" onchange="recol('${i.id}',this.value)" style="width:22px;height:22px;border:0;padding:0;background:none"> ${i.cat.split('/')[0]}</div></div>`).join('')}</div>`;
+ $('#f').onchange=async e=>{for(const f of e.target.files)await add(f,$('#cat').value);save();wardrobe()}}
+function add(file,cat){return new Promise(res=>{const im=new Image();im.onload=()=>{
+ const k=Math.min(1,360/Math.max(im.width,im.height)),w=im.width*k,h=im.height*k,c=document.createElement('canvas');c.width=w;c.height=h;
+ const x=c.getContext('2d');x.drawImage(im,0,0,w,h);
+ const d=x.getImageData(w*.3,h*.3,w*.4,h*.4).data;let r=0,g=0,b=0,n=0;
+ for(let i=0;i<d.length;i+=16){r+=d[i];g+=d[i+1];b+=d[i+2];n++}
+ S.items.push({id:Date.now()+''+Math.random().toString(36).slice(2,6),cat,img:c.toDataURL('image/jpeg',.7),color:r2h(r/n,g/n,b/n)});res()};
+ im.src=URL.createObjectURL(file)})}
+function del(id){S.items=S.items.filter(i=>i.id!=id);save();wardrobe()}
+function recol(id,c){S.items.find(i=>i.id==id).color=c;save()}
+function insp(){
+ const p=S.prof,names={Primavera:'warm spring colors',Estate:'soft summer colors',Autunno:'earthy autumn colors',Inverno:'bold winter colors'};
+ const q=st=>encodeURIComponent(`${st} outfit ${p.hijab?'hijab':''} ${names[p.season]}`.replace(/\s+/g,' ').trim());
+ $('#app').innerHTML=`<h1>Ispirazione</h1><p class="s">Ricerche Pinterest basate sul tuo profilo. Si aprono in una nuova scheda.</p>
+ ${p.styles.map(s=>`<a class="l" target="_blank" rel="noopener" href="https://www.pinterest.com/search/pins/?q=${q(s)}">📌 Outfit ${s.toLowerCase()} · ${p.season}</a>`).join('')}
+ ${p.occ.map(o=>`<a class="l" target="_blank" rel="noopener" href="https://www.pinterest.com/search/pins/?q=${q(o)}">📌 ${o} · look versatili</a>`).join('')}
+ <a class="l" target="_blank" rel="noopener" href="https://www.pinterest.com/search/pins/?q=${encodeURIComponent('hijab styling '+names[p.season])}">📌 Abbinamenti hijab ${p.season}</a>
+ <h2>La tua palette</h2><div class="card">${palC(p).map(c=>`<span class="sw" style="background:${c}"></span>`).join('')}<p class="s" style="margin:8px 0 0">${PAL[p.season].d}</p></div>`}
+function prof(){
+ $('#app').innerHTML=`<h1>Profilo</h1><div class="card"><b>${S.prof.season} ${S.prof.sub||''}</b><br><span class="s">${S.prof.styles.join(', ')} · ${S.prof.occ.join(', ')||'tutte le occasioni'}<br>Hijab: ${S.prof.hijab?'sì':'no'}</span>
+ <button class="p" id="re">Modifica preferenze</button><button class="g" style="margin-top:8px;width:100%" onclick="redo()">Rifai l’analisi dei colori</button></div>${avCard()}${veilCard(S.prof)}${privCard()}
+ <div class="card"><b>Come funziona</b><p class="s" style="margin:6px 0 0">Ogni outfit riceve un punteggio: 55% quanto i colori sono vicini alla tua palette (l'hijab pesa di più, perché è vicino al viso), 45% armonia tra i capi (neutri, analoghi, complementari).</p></div>`;
+ $('#re').onclick=()=>{ob={season:S.prof.season,sub:S.prof.sub||'',styles:S.prof.styles,occ:S.prof.occ,hijab:S.prof.hijab,under:'',contrast:''};S.prof=null;onboard()}}
+const SUBS={Primavera:['Chiara','Calda','Brillante'],Estate:['Chiara','Fredda','Morbida'],Autunno:['Morbida','Calda','Profonda'],Inverno:['Profonda','Fredda','Brillante']};
+const WXS=['Caldo','Mite','Fresco','Freddo','Pioggia'];let wx='Mite';
+const HT={Lavoro:'cotone o jersey, drappeggio semplice con piccola spilla',Cerimonia:'chiffon o seta, drappeggio ampio con fermaglio gioiello',Sera:'seta satinata o velluto, stile avvolto o turbante',Università:'jersey comodo con sottocappa, stile pratico',Quotidiano:'jersey o viscosa, stile classico con sottocappa a tono','Estate/mare':'cotone o lino leggero, annodatura morbida e traspirante'};
+function fromHsl(h,s,l){const a=s*Math.min(l,1-l),f=n=>{const k=(n+h/30)%12;return l-a*Math.max(-1,Math.min(k-3,9-k,1))};return r2h(f(0)*255,f(8)*255,f(4)*255)}
+function palC(p){return PAL[p.season].c.map(c=>{const o=hsl(c),u=p.sub||'';let H=o.h,Sx=o.s,L=o.l;
+ if(u=='Chiara')L=Math.min(.92,L+.08);if(u=='Profonda')L=Math.max(.12,L-.08);if(u=='Brillante')Sx=Math.min(1,Sx*1.2);if(u=='Morbida')Sx*=.8;
+ if(u=='Calda')H=(H+(((30-H+540)%360)-180)*.1+360)%360;if(u=='Fredda')H=(H+(((220-H+540)%360)-180)*.1+360)%360;
+ return fromHsl(H,Sx,L)})}
+function cn(h){const c=hsl(h),H=c.h;if(c.l<.14)return['nero','black'];if(c.l>.92&&c.s<.3)return['bianco','white'];
+ if(c.s<.15)return c.l<.45?['antracite','charcoal']:['grigio','grey'];
+ if(H<40&&c.s<.45&&c.l>.55)return['beige','beige'];if(H<40&&c.s<.5&&c.l<=.55)return['marrone','brown'];
+ if(H<15||H>=345)return c.l<.3?['bordeaux','burgundy']:['rosso','red'];if(H<40)return['arancio','orange'];if(H<70)return['senape','mustard'];
+ if(H<160)return c.l<.35?['verde bosco','forest green']:['verde','green'];if(H<200)return['petrolio','teal'];
+ if(H<255)return c.l<.3?['blu navy','navy']:['azzurro','blue'];if(H<290)return['viola','purple'];return['rosa','pink']}
+const wv=i=>i.w||(i.cat.startsWith('Giacca')?3:2);
+function adv(o){const its=o.its,t=[],p=S.prof,hj=its.find(i=>i.cat=='Hijab'),main=its.filter(i=>i.cat!='Hijab'&&i.cat!='Scarpe'),warm=p.season=='Primavera'||p.season=='Autunno'||p.sub=='Calda';
+ t.push('Gioielli e dettagli in '+(warm?'oro':'argento')+' per esaltare la tua palette.');
+ if(hj&&main[0]){const d=Math.abs(hsl(hj.color).h-hsl(main[0].color).h);t.push('Hijab: '+HT[occ]+'. '+(neutral(hj.color)||neutral(main[0].color)?'Il neutro lascia protagonista il colore dell\'altro capo.':d<30?'Tono su tono con il capo: effetto elegante e allungante.':'Contrasto armonico: illumina il viso.'))}
+ const avg=its.find(i=>!neutral(i.color))||its[0],best=palC(p).filter(c=>!its.some(i=>dist(i.color,c)<60)).sort((a,b)=>pair(avg.color,b)+palFit(b)-pair(avg.color,a)-palFit(a))[0];
+ if(best)t.push('Accessorio consigliato (borsa, spilla o sciarpa): '+cn(best)[0]+'.');
+ if(['Freddo','Pioggia'].includes(wx)&&!its.some(i=>i.cat.startsWith('Giacca')))t.push('Ti manca un capospalla: aggiungine uno in un neutro della tua palette.');
+ return t}
+function pin(o){const m=o.its.filter(i=>i.cat!='Hijab'&&i.cat!='Scarpe'),hj=o.its.find(i=>i.cat=='Hijab');
+ return 'https://www.pinterest.com/search/pins/?q='+encodeURIComponent(m.map(i=>cn(i.color)[1]).join(' and ')+' modest outfit'+(hj?' with '+cn(hj.color)[1]+' hijab':'')+' '+(S.prof.styles[0]||'')+' '+occ)}
+function hpin(o){const h=o.its.find(i=>i.cat=='Hijab');return 'https://www.pinterest.com/search/pins/?q='+encodeURIComponent('hijab style '+occ+' '+cn(h.color)[1]+' hijab')}
+function genOutfits(){const hij=S.prof.hijab,ok=i=>wx=='Caldo'?wv(i)<3:wx=='Freddo'?wv(i)>1||i.cat=='Hijab':true;
+ const by=c=>S.items.filter(i=>i.cat==c&&ok(i));const tops=by('Top'),bot=by('Pantaloni/Gonna'),dr=by('Abito/Abaya'),hj=by('Hijab'),sh=by('Scarpe');
+ let jk=by('Giacca/Cardigan');const req=['Freddo','Pioggia'].includes(wx)&&jk.length;if(wx=='Caldo')jk=[];
+ const bases=[...dr.map(d=>[d]),...tops.flatMap(t=>bot.map(b=>[t,b]))],list=[];
+ bases.forEach(b=>(hij&&hj.length?hj:[null]).forEach(h=>(req?jk:[null,...jk]).forEach(j=>[null,...sh].forEach(s=>{const o=[...b,h,j,s].filter(Boolean);if(o.length<2)return;
+  const sm=o.filter(i=>S.prof.styles.includes(i.st)).length;list.push({its:o,sc:Math.min(1,score(o)+.03*sm+Math.random()*.03)})}))));
+ const seen=new Set();res=[];list.sort((a,b)=>b.sc-a.sc).forEach(o=>{const k=o.its.map(i=>i.id).join();if(!seen.has(k)&&res.length<6){seen.add(k);res.push(o)}})}
+function card(o,i,f){return `<div class="card"><div class="out">${o.its.map(thumb).join('')}</div><p style="margin:10px 0 4px"><span class="score">Compatibilità ${Math.round(o.sc*100)}%</span><br><span class="s">${why(o.its,o.sc)}</span></p>
+<ul class="s" style="margin:4px 0 10px;padding-left:18px">${adv(o).map(x=>`<li>${x}</li>`).join('')}</ul>
+<div class="chips"><button class="g" onclick="${f?`unfav(${i})`:`fav(${i},this)`}">${f?'🗑 Rimuovi':'❤ Salva'}</button><a class="g" style="text-decoration:none" target="_blank" rel="noopener" href="${pin(o)}">📌 Ispirazione</a>${o.its.some(x=>x.cat=='Hijab')?`<a class="g" style="text-decoration:none" target="_blank" rel="noopener" href="${hpin(o)}">🧕 Stili hijab</a>`:''}</div></div>`}
+function home(){$('#app').innerHTML=`<h1>I tuoi outfit</h1><p class="s">Palette ${S.prof.season} ${S.prof.sub||''} · ${S.prof.styles.join(', ')}</p>
+<div class="card"><label style="margin-top:0">Occasione</label><select id="occ">${OCC.map(o=>`<option ${o==occ?'selected':''}>${o}</option>`).join('')}</select>
+<label>Meteo</label><div class="chips">${WXS.map(w=>`<button class="chip ${w==wx?'on':''}" onclick="wx='${w}';home()">${w}</button>`).join('')}</div>
+<button class="p" id="gen">Crea i miei outfit</button></div><div id="res">${S.items.length<3?'<div class="card">Aggiungi i tuoi capi nella sezione <b>Armadio</b> per iniziare.</div>':''}</div>`;
+ $('#occ').onchange=e=>occ=e.target.value;$('#gen').onclick=()=>{genOutfits();show()};if(res.length)show()}
+function show(){$('#res').innerHTML=res.length?res.map((o,i)=>card(o,i,0)).join(''):'<div class="card">Servono più capi: aggiungi top e pantaloni/gonne oppure abiti (e hijab).</div>'}
+function fav(i,b){S.fav=S.fav||[];S.fav.push({ids:res[i].its.map(x=>x.id),sc:res[i].sc});save();b.textContent='✓ Salvato'}
+function unfav(i){S.fav.splice(i,1);save();favs()}
+function favs(){const L=(S.fav||[]).map((f,i)=>({i,o:{its:f.ids.map(id=>S.items.find(x=>x.id==id)).filter(Boolean),sc:f.sc}})).filter(x=>x.o.its.length>1);
+ $('#app').innerHTML='<h1>Preferiti</h1>'+(L.length?L.map(x=>card(x.o,x.i,1)).join(''):'<p class="s">Salva gli outfit che ami con ❤.</p>')}
+function setw(id,v){S.items.find(i=>i.id==id).w=+v;save()}
+async function ai(c){if(S.noai)return null;try{const sm=window.claude&&await claude.use('sample');if(!sm)return null;const l=await sm.limits();if(!l.images)return null;
+ const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.7));
+ return await sm.json('Sei una stylist. Analizza il capo nella foto. Rispondi SOLO con JSON: {"cat":"una tra '+CATS.join(' | ')+'","name":"nome breve in italiano","color":"hex #rrggbb del capo, ignora lo sfondo","style":"uno tra '+STYLES.join(' | ')+'","w":1 leggero, 2 medio o 3 pesante}',{images:[b],modelTier:'quick'})}catch(e){return null}}
+function add(file,cat){return new Promise(res=>{const im=new Image();im.onload=async()=>{
+ const k=Math.min(1,360/Math.max(im.width,im.height)),w=im.width*k,h=im.height*k,c=document.createElement('canvas');c.width=w;c.height=h;
+ const x=c.getContext('2d');x.drawImage(im,0,0,w,h);const d=x.getImageData(w*.3,h*.3,w*.4,h*.4).data;let r=0,g=0,b=0,n=0;
+ for(let i=0;i<d.length;i+=16){r+=d[i];g+=d[i+1];b+=d[i+2];n++}
+ const auto=cat=='Auto (AI)',it={id:Date.now()+''+Math.random().toString(36).slice(2,6),cat:auto?'Top':cat,img:c.toDataURL('image/jpeg',.7),color:r2h(r/n,g/n,b/n)};
+ const a=await ai(c);if(a){if(auto&&CATS.includes(a.cat))it.cat=a.cat;if(/^#[0-9a-f]{6}$/i.test(a.color||''))it.color=a.color.toLowerCase();it.name=a.name;if(STYLES.includes(a.style))it.st=a.style;if([1,2,3].includes(+a.w))it.w=+a.w}
+ S.items.push(it);res()};im.src=URL.createObjectURL(file)})}
+function wardrobe(){$('#app').innerHTML=`<h1>Il mio armadio</h1><p class="s">${S.items.length} capi · l'AI riconosce categoria, colore, stile e pesantezza dalla foto (puoi correggere).</p>
+<div class="card"><label style="margin-top:0">Categoria</label><select id="cat"><option>Auto (AI)</option>${CATS.map(c=>`<option>${c}</option>`).join('')}</select>
+<input type="file" id="f" accept="image/*" multiple class="hide"><button class="p" onclick="document.getElementById('f').click()">📷 Carica foto</button><p class="s" id="msg" style="margin:8px 0 0"></p></div>
+<div class="grid">${S.items.map(i=>`<div class="it"><img src="${i.img}" alt=""><button class="x" onclick="del('${i.id}')">×</button><div class="t"><input type="color" value="${i.color}" onchange="recol('${i.id}',this.value)" style="width:22px;height:22px;border:0;padding:0;background:none"><select onchange="setw('${i.id}',this.value)" style="font-size:11px;padding:2px;width:auto">${[['1','Leggero'],['2','Medio'],['3','Pesante']].map(([v,l])=>`<option value="${v}" ${wv(i)==v?'selected':''}>${l}</option>`).join('')}</select></div><div class="t">${i.name||i.cat.split('/')[0]}</div></div>`).join('')}</div>`;
+ $('#f').onchange=async e=>{let n=0;for(const f of e.target.files){$('#msg').textContent='Analizzo '+(++n)+'/'+e.target.files.length+'…';await add(f,$('#cat').value)}save();wardrobe()}}
+function render(){if(!S.prof){if(an.step!='skip'){anUI();return}onboard();return}$('#nav').className='';$('#nav').innerHTML=[['home','Outfit'],['wardrobe','Armadio'],['favs','Preferiti'],['insp','Ispirazione'],['prof','Profilo']].map(([k,l])=>`<button class="${tab==k?'on':''}" onclick="tab='${k}';render()">${l}</button>`).join('');({home,wardrobe,favs,insp,prof})[tab]();window.scrollTo(0,0)}
+let an={step:'intro',a:[],ai:null,hj:null,res:null};
+const HJ=['Sì, sempre','A volte','No'],IT={warm:'caldo',cool:'freddo',neutral:'neutro'};
+const AV={Primavera:'nero pieno, grigio scuro e colori freddi o polverosi',Estate:'arancio, senape, nero pieno e colori troppo caldi o saturi',Autunno:'rosa freddi, azzurro ghiaccio, nero e bianco puro',Inverno:'beige, arancio, marrone e colori spenti o terrosi'};
+const QS=[
+{q:'Vene all’interno del polso (luce naturale)',o:[['Verdastre',2,0,0],['Bluastre o viola',-2,0,0],['Miste / non so',0,0,0]]},
+{q:'Gioielli: quale ti illumina di più?',o:[['Oro',2,0,0],['Argento',-2,0,0],['Stanno bene entrambi',0,0,0]]},
+{q:'Vicino al viso: bianco puro o panna?',o:[['Bianco puro',-2,0,1],['Panna / avorio',2,0,-1],['Nessuna differenza',0,0,0]]},
+{q:'Vicino al viso: il nero come ti sta?',o:[['Mi definisce e mi dona',0,-1,2],['Mi spegne, meglio colori morbidi',0,1,-2],['Dipende',0,0,0]]},
+{q:'Al sole la tua pelle…',o:[['Si abbronza facilmente, dorata',1,0,0],['Si scotta, diventa rosa',-1,0,0],['Non so',0,0,0]]},
+{q:'Carnagione',o:[['Molto chiara',0,2,0],['Chiara',0,1,0],['Media / olivastra',0,-1,0],['Scura',0,-2,0]]},
+{q:'Colore degli occhi',o:[['Azzurri / grigi / verde chiaro',-1,1,0],['Nocciola / ambra / verde dorato',1,0,0],['Marroni',0,-1,0],['Marrone molto scuro / neri',0,-2,1]]},
+{q:'Contrasto tra pelle, occhi e sopracciglia',o:[['Alto: occhi e sopracciglia risaltano molto',0,0,2],['Medio',0,0,0],['Basso: tutto sfumato e delicato',0,0,-2]]},
+{q:'Sopracciglia',o:[['Chiare (biondo / castano chiaro)',0,1,-1],['Castane',0,0,0],['Nere / molto scure',0,-1,1]]},
+{q:'Colore naturale delle labbra',o:[['Rosa freddo / lilla',-1,0,0],['Pesca / corallo',1,0,0],['Rosa neutro',0,0,0],['Scure / marroni',0,-1,0]]},
+{q:'Capelli naturali (non tinti)',h:1,o:[['Biondo dorato / ramato',2,1,0],['Biondo o castano cenere',-2,1,0],['Castano medio',0,0,0],['Castano scuro / nero',0,-2,1]]},
+{q:'Quali colori ti dicono che ti stanno bene?',o:[['Pastello freddi e polverosi',-1,1,-1],['Caldi e luminosi (pesca, corallo)',1,1,1],['Terrosi (senape, ruggine, oliva)',1,-1,-1],['Intensi e netti (blu reale, fucsia, nero)',-1,-1,1]]},
+{q:'Fucsia / rosa freddo o corallo / salmone?',o:[['Fucsia / rosa freddo',-2,0,0],['Corallo / salmone',2,0,0],['Entrambi o nessuno',0,0,0]]},
+{q:'Le guance quando arrossisci',o:[['Rosa freddo',-1,0,0],['Pesca / albicocca',1,0,0],['Quasi non arrossisco',0,0,0]]},
+{q:'Il bianco dell’occhio e l’iride',o:[['Netto, iride intensa',0,0,2],['Sfumato, iride morbida',0,0,-2],['Via di mezzo',0,0,0]]}];
+function setHj(i){an.hj=HJ[i];anUI()}
+function goQ(){if(!an.hj){alert('Rispondi alla domanda sul velo');return}an.step='q';anUI();scrollTo(0,0)}
+function goSkip(){an.step='skip';render()}
+function pick(i,j){an.a[i]=j;const y=scrollY;anUI();scrollTo(0,y)}
+function redo(){an={step:'intro',a:[],ai:null,hj:null,res:null};S.prof=null;render()}
+function anCalc(){const hb=an.hj=='Sì, sempre';let T=0,V=0,C=0;
+ QS.forEach((q,i)=>{if(q.h&&hb)return;const a=an.a[i];if(a==null)return;const o=q.o[a];T+=o[1];V+=o[2];C+=o[3]});
+ if(an.ai&&an.ai.reliable){const m={warm:3,cool:-3,light:3,deep:-3,bright:3,soft:-3};T+=m[an.ai.undertone]||0;V+=m[an.ai.depth]||0;C+=m[an.ai.chroma]||0}
+ const t=Math.tanh(T/4),v=Math.tanh(V/4),c=Math.tanh(C/4);
+ const s4={Primavera:t+(v+c)/2,Autunno:t+(-v-c)/2,Estate:-t+(v-c)/2,Inverno:-t+(-v+c)/2};
+ const r=Object.entries(s4).sort((a,b)=>b[1]-a[1]),se=r[0][0];
+ const sc={Primavera:{Calda:t,Chiara:v,Brillante:c},Estate:{Fredda:-t,Chiara:v,Morbida:-c},Autunno:{Calda:t,Profonda:-v,Morbida:-c},Inverno:{Fredda:-t,Profonda:-v,Brillante:c}}[se];
+ const d=r[0][1]-r[1][1];return{season:se,sub:Object.entries(sc).sort((a,b)=>b[1]-a[1])[0][0],alt:r[1][0],t,v,c,conf:d>.6?'alta':d>.25?'media':'bassa'}}
+function anGo(){const hb=an.hj=='Sì, sempre';const n=QS.filter((q,i)=>!(q.h&&hb)&&an.a[i]!=null).length;
+ if(n<6){alert('Rispondi ad almeno 6 domande (o aggiungi il selfie) per un risultato affidabile.');return}
+ an.res=anCalc();const R=an.res;if(Math.max(Math.abs(R.t),Math.abs(R.v),Math.abs(R.c))<.25){alert('Le risposte sono troppo neutre per un risultato affidabile: prova a rispondere con più decisione o aggiungi il selfie.');return}an.step='res';anUI();scrollTo(0,0)}
+function anUse(){ob.season=an.res.season;ob.sub=an.res.sub;ob.hijab=an.hj=='Sì, sempre'?true:an.hj=='A volte'?'x':false;an.step='skip';render()}
+async function selfie(f){const m=document.getElementById('sm');if(!an.cons){m.textContent='Spunta prima il consenso qui sopra, poi riprova.';document.getElementById('sf').value='';return}m.textContent='Analizzo il viso…';
+ try{const sm=window.claude&&await claude.use('sample');const l=sm&&await sm.limits();if(!sm||!l.images){m.textContent='Analisi foto non disponibile: usa il questionario.';return}
+ const im=await new Promise((r,j)=>{const i=new Image();i.onload=()=>r(i);i.onerror=j;i.src=URL.createObjectURL(f)});
+ const k=Math.min(1,640/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+ const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.8));
+ const a=await sm.json('Sei una color analyst esperta di armocromia. Osserva il viso nella foto. IGNORA capelli, hijab o velo, trucco, vestiti e sfondo (possono riflettere colore sulla pelle). Valuta solo pelle, occhi, sopracciglia e labbra. Rispondi SOLO con JSON: {"undertone":"warm|cool|neutral","depth":"light|medium|deep","chroma":"bright|soft|medium","eyes":"colore degli occhi in italiano","note":"una frase in italiano","reliable":true oppure false se luce, filtri o inquadratura non permettono un’analisi affidabile}',{images:[b],modelTier:'default'});
+ a.reliable=a.reliable!==false;c.width=c.height=0;URL.revokeObjectURL(im.src);document.getElementById('sf').value='';an.ai={undertone:a.undertone,depth:a.depth,chroma:a.chroma,eyes:a.eyes,note:a.note,reliable:a.reliable};anUI()}catch(e){m.textContent='Non sono riuscita ad analizzare la foto: usa il questionario.'}}
+function anUI(){$('#nav').className='hide';const hb=an.hj=='Sì, sempre',A=$('#app');
+ if(an.step=='intro'){A.innerHTML=`<h1>Scopri i tuoi colori ✨</h1><p class='s'>Un’analisi di armocromia guidata, con selfie facoltativo analizzato dall’AI.</p>
+ <div class='card'><label style='margin-top:0'>Porti l’hijab?</label><div class='chips'>${HJ.map((x,i)=>`<button class='chip ${an.hj==x?'on':''}' onclick='setHj(${i})'>${x}</button>`).join('')}</div>
+ <p class='s' style='margin-top:10px'>${hb?'Con il velo i capelli non si vedono: l’analisi userà solo pelle, occhi, sopracciglia e labbra, e ti dirò quali colori tenere vicino al viso.':'Se porti il velo, i capelli non contano: rispondi alla domanda per ottenere un’analisi su misura.'}</p>
+ <button class='p' onclick='goQ()'>Inizia l’analisi</button><button class='g' style='width:100%;margin-top:8px' onclick='goSkip()'>Conosco già la mia stagione</button></div>`;return}
+ if(an.step=='q'){const Q=QS.map((q,i)=>q.h&&hb?'':`<div class='card'><label style='margin-top:0'>${q.q}</label><div class='chips'>${q.o.map((o,j)=>`<button class='chip ${an.a[i]===j?'on':''}' onclick='pick(${i},${j})'>${o[0]}</button>`).join('')}</div></div>`).join('');
+ A.innerHTML=`<h1>Analisi dei colori</h1><p class='s'>Rispondi con luce naturale, senza trucco e senza filtri.</p>
+ <div class='card'><b>📷 Selfie (facoltativo)</b><p class='s' style='margin:6px 0'>Viso frontale, luce del giorno vicino a una finestra, niente filtri. ${hb?'Puoi tenere il velo: l’AI ignora hijab e capelli (meglio se bianco o neutro). ':''}La foto non viene mai salvata né conservata: viene inviata all’AI solo per questa analisi e poi eliminata dalla memoria.</p><label style='display:flex;gap:8px;align-items:center;margin:0 0 8px;font-weight:400'><input type='checkbox' ${an.cons?'checked':''} onchange='an.cons=this.checked'> Acconsento all’analisi della mia foto</label>
+ <input type='file' id='sf' accept='image/*' class='hide'><button class='g' onclick='sfp(0)'>📸 Scatta selfie</button> <button class='g' onclick='sfp(1)'>🖼 Carica foto</button>
+ <p class='s' id='sm' style='margin:8px 0 0'>${an.ai?(an.ai.reliable?'✓ Foto analizzata: sottotono '+(IT[an.ai.undertone]||'')+', occhi '+(an.ai.eyes||'')+'. '+(an.ai.note||''):'⚠ Foto poco affidabile (luce o filtri): ignorata. Riprova con luce naturale.'):''}</p></div>${Q}
+ <button class='p' onclick='anGo()'>Vedi il mio risultato</button>`;
+ $('#sf').onchange=e=>e.target.files[0]&&selfie(e.target.files[0]);return}
+ const r=an.res,p={season:r.season,sub:r.sub};
+ A.innerHTML=`<h1>${r.season} ${r.sub}</h1><p class='s'>Affidabilità ${r.conf}${r.conf=='alta'?'':' · potresti essere anche '+r.alt}</p>
+ ${bars(r)}<div class='card'><b>La tua palette</b><div style='margin:8px 0'>${palC(p).map(c=>`<span class='sw' style='background:${c}'></span>`).join('')}</div><p class='s' style='margin:0'>${PAL[r.season].d}</p></div>
+ ${veilCard(p)}<div class='card'><b>Da evitare vicino al viso</b><p class='s' style='margin:6px 0 0'>${AV[r.season]}</p></div>
+ <div class='card'><b>${hb?'Con il velo 🧕':'Consiglio'}</b><p class='s' style='margin:6px 0 0'>${hb?'I capelli non si vedono, quindi l’hijab è il tuo colore viso: scegli i veli nei colori della palette e metti i colori meno adatti lontano dal viso (gonne, pantaloni, scarpe). Prova il velo allo specchio con luce naturale: se la pelle appare uniforme e luminosa è giusto, se ombre e occhiaie risaltano no.':'Prova i colori vicino al viso con luce naturale: se pelle e occhi si illuminano, è il colore giusto.'}</p></div>
+ <button class='p' onclick='anUse()'>Usa questo risultato</button><button class='g' style='width:100%;margin-top:8px' onclick="an.step='q';anUI()">Modifica le risposte</button>`}
+const VEIL={Primavera:[['Pesca','#f6c3a0'],['Corallo','#f08a6c'],['Giallo burro','#f6dc8a'],['Verde mela','#a8cf7e'],['Turchese','#4fbfb0'],['Avorio','#fff4dc'],['Cammello chiaro','#d9b88a'],['Rosa salmone','#f4a5a0']],
+Estate:[['Rosa cipria','#e8bfc8'],['Lavanda','#c4b5dc'],['Azzurro polvere','#a9c4e0'],['Grigio perla','#cfd3dc'],['Malva','#b98aa8'],['Verde salvia','#a8bfae'],['Bianco latte','#f4f1f3'],['Blu avio','#7f9bc0']],
+Autunno:[['Senape','#c99a2e'],['Terracotta','#b9603c'],['Verde oliva','#7a8040'],['Cammello','#b98a55'],['Ruggine','#9c4a2a'],['Panna','#f1e3c4'],['Verde bosco','#3f5b46'],['Bordeaux caldo','#7b2f2f']],
+Inverno:[['Bianco ottico','#ffffff'],['Nero','#111418'],['Fucsia','#c2185b'],['Blu reale','#1f46b8'],['Smeraldo','#0f8a6a'],['Antracite','#4a4f5a'],['Rosso lampone','#c0173a'],['Azzurro ghiaccio','#cfe6f7']]};
+function tr(c,u){const o=hsl(c);let H=o.h,Sx=o.s,L=o.l;if(u=='Chiara')L=Math.min(.92,L+.08);if(u=='Profonda')L=Math.max(.12,L-.08);if(u=='Brillante')Sx=Math.min(1,Sx*1.2);if(u=='Morbida')Sx*=.8;if(u=='Calda')H=(H+(((30-H+540)%360)-180)*.1+360)%360;if(u=='Fredda')H=(H+(((220-H+540)%360)-180)*.1+360)%360;return fromHsl(H,Sx,L)}
+function palC(p){return PAL[p.season].c.map(c=>tr(c,p.sub||''))}
+function vl(p){return VEIL[p.season].map(([n,c])=>[n,tr(c,p.sub||'')])}
+window.alert=m=>{let t=document.getElementById('tt');if(!t){t=document.createElement('div');t.id='tt';t.style.cssText='position:fixed;left:50%;top:16px;transform:translateX(-50%);background:#35566f;color:#fff;padding:10px 16px;border-radius:12px;font:14px system-ui;z-index:9;max-width:90%';document.body.appendChild(t)}t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3500)};
+function veilCard(p){return `<div class='card'><b>🧕 I tuoi colori per il velo</b><p class='s' style='margin:4px 0 10px'>Tocca un colore per vedere idee su Pinterest.</p><div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px'>${vl(p).map(([n,h])=>`<a target='_blank' rel='noopener' href='https://www.pinterest.com/search/pins/?q=${encodeURIComponent('hijab '+n+' outfit')}' style='text-decoration:none;color:inherit;text-align:center;font:12px system-ui,sans-serif'><span class='sw' style='background:${h};width:54px;height:54px;margin:0 0 4px'></span><br>${n}</a>`).join('')}</div><button class='g' style='margin-top:12px' onclick='dlPal(${JSON.stringify(p)})'>⬇ Scarica la palette (PNG)</button></div>`}
+async function dlPal(p){const dl=window.claude&&await claude.use('downloads');
+ const V=vl(p),P=palC(p),c=document.createElement('canvas');c.width=900;c.height=620;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,900,620);
+ x.fillStyle='#3b2f33';x.font='bold 38px Georgia';x.fillText('La mia palette: '+p.season+' '+(p.sub||''),40,70);x.font='22px Georgia';x.fillStyle='#8a7a80';x.fillText('Colori della stagione',40,125);
+ P.forEach((h,i)=>{x.fillStyle=h;x.beginPath();x.arc(80+i*105,190,42,0,7);x.fill()});x.fillStyle='#8a7a80';x.fillText('Colori per il velo',40,290);
+ V.forEach(([n,h],i)=>{const cx=110+(i%4)*220,cy=370+Math.floor(i/4)*130;x.fillStyle=h;x.beginPath();x.arc(cx,cy,42,0,7);x.fill();x.strokeStyle='#f0e0e4';x.stroke();x.fillStyle='#3b2f33';x.font='20px Georgia';x.textAlign='center';x.fillText(n,cx,cy+68);x.textAlign='left'});
+ const b=await new Promise(r=>c.toBlob(r,'image/png'));try{if(dl)await dl.save({filename:'la-mia-palette.png',data:b});else{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='la-mia-palette.png';a.click()}}catch(e){}}
+const SK=['#fde0cc','#f6c9a8','#e6aa82','#c98a5e','#9a6240','#6b4129'],HR=['#2b1d16','#6b4129','#b5793c','#e3c077','#b0381f'];
+function A0(){return Object.assign({skin:SK[1],hj:S.prof.hijab!==false,hair:HR[1],hc:vl(S.prof)[0][1]},S.av)}
+function av(o){const t=o.top||'#e0eef8',a=o.arm||t,b=o.bot||'#d9c3c9',s=o.shoe||'#8a7a80',k=o.skin;
+ return `<svg viewBox='0 0 100 165' style='width:100%;display:block'><polygon points='33,118 67,118 72,152 28,152' fill='${b}'/><rect x='30' y='76' width='40' height='46' rx='10' fill='${t}'/><rect x='21' y='80' width='10' height='40' rx='5' fill='${a}'/><rect x='69' y='80' width='10' height='40' rx='5' fill='${a}'/><ellipse cx='40' cy='158' rx='9' ry='5' fill='${s}'/><ellipse cx='60' cy='158' rx='9' ry='5' fill='${s}'/><rect x='45' y='66' width='10' height='14' fill='${k}'/>`
+ +(o.hj?`<path d='M50 12C27 12 21 34 23 56C24 70 17 82 21 98L79 98C83 82 76 70 77 56C79 34 73 12 50 12Z' fill='${o.hc}'/>`:`<ellipse cx='50' cy='44' rx='20' ry='24' fill='${o.hair}'/><rect x='30' y='44' width='40' height='40' rx='14' fill='${o.hair}'/>`)
+ +`<ellipse cx='50' cy='49' rx='15' ry='18' fill='${k}'/><circle cx='44' cy='48' r='1.8' fill='#3b2f33'/><circle cx='56' cy='48' r='1.8' fill='#3b2f33'/><circle cx='40' cy='54' r='3' fill='#f4a5a8' opacity='.5'/><circle cx='60' cy='54' r='3' fill='#f4a5a8' opacity='.5'/><path d='M46 57Q50 61 54 57' stroke='#3b2f33' stroke-width='1.3' fill='none' stroke-linecap='round'/>`
+ +(o.hj?'':`<path d='M31 44C34 26 66 26 69 44C60 36 40 36 31 44Z' fill='${o.hair}'/>`)+'</svg>'}
+function oprops(o){const m=o.its.filter(i=>i.cat!='Hijab'&&i.cat!='Scarpe'&&!i.cat.startsWith('Giacca')),hj=o.its.find(i=>i.cat=='Hijab'),j=o.its.find(i=>i.cat.startsWith('Giacca')),sh=o.its.find(i=>i.cat=='Scarpe'),d=o.its.find(i=>i.cat.startsWith('Abito')),r={};
+ if(hj){r.hj=true;r.hc=hj.color}if(d){r.top=r.bot=d.color}else{if(m[0])r.top=m[0].color;if(m[1])r.bot=m[1].color}if(j)r.arm=j.color;if(sh)r.shoe=sh.color;return r}
+const _card=card;card=function(o,i,f){return _card(o,i,f).replace('<div class="out">','<div class="out"><figure>'+av(Object.assign({},A0(),oprops(o)))+'<span>Tu</span></figure>')};
+const _home=home;home=function(){_home();$('#app').insertAdjacentHTML('afterbegin',`<div style='float:right;width:56px'>${av(A0())}</div>`)};
+function avs(k,i){const o=S.av||(S.av={});if(k==0)o.skin=SK[i];if(k==1)o.hj=!!i;if(k==2)o.hc=vl(S.prof)[i][1];if(k==3)o.hair=HR[i];save();prof()}
+function avCard(){const o=A0(),sw=(c,fn)=>`<button class='chip' style='background:${c};width:30px;height:30px;padding:0' onclick='${fn}'></button>`;
+ return `<div class='card'><b>Il tuo avatar</b><div style='display:flex;gap:16px;align-items:center;margin-top:8px'><div style='width:90px'>${av(o)}</div><div style='flex:1'><div class='chips'>${SK.map((c,i)=>sw(c,`avs(0,${i})`)).join('')}</div><div class='chips' style='margin-top:8px'><button class='chip ${o.hj?'on':''}' onclick='avs(1,1)'>Con velo</button><button class='chip ${o.hj?'':'on'}' onclick='avs(1,0)'>Senza velo</button></div><div class='chips' style='margin-top:8px'>${o.hj?vl(S.prof).map(([n,c],i)=>sw(c,`avs(2,${i})`)).join(''):HR.map((c,i)=>sw(c,`avs(3,${i})`)).join('')}</div></div></div></div>`}
+function privCard(){return `<div class='card'><b>🔒 Privacy</b><ul class='s' style='padding-left:18px;margin:8px 0'><li>Foto del viso: usata solo durante l’analisi, mai salvata.</li><li>Foto dei capi: restano solo su questo dispositivo, non su un server dell’app.</li><li>Analisi AI dei capi: ${S.noai?'<b>disattivata</b>':'attiva (la foto viene inviata all’AI solo per riconoscere colore e stile)'}.</li></ul><button class='g' onclick='togAI()'>${S.noai?'Attiva':'Disattiva'} l’AI sui capi</button> <button class='g' onclick='wipe(this)'>Elimina tutti i miei dati</button></div>`}
+function togAI(){S.noai=!S.noai;save();prof()}
+function wipe(b){if(!b.dataset.c){b.dataset.c=1;b.textContent='Tocca ancora per confermare';return}try{localStorage.removeItem('guardaroba_v1')}catch(e){}S={prof:null,items:[],fav:[]};res=[];an={step:'intro',a:[],ai:null,hj:null,res:null};render()}
+const GL=[['Maglietta / Top','Top'],['Camicia','Top'],['Pantaloni','Pantaloni/Gonna'],['Gonna','Pantaloni/Gonna'],['Abito / Abaya','Abito/Abaya'],['Giacca','Giacca/Cardigan'],['Cardigan','Giacca/Cardigan'],['Hijab','Hijab'],['Scarpe','Scarpe']];let Q=[];
+function pk(i){document.getElementById(i?'fg':'fc').click()}
+function prep(f){return new Promise(r=>{const im=new Image();im.onload=()=>{const k=Math.min(1,360/Math.max(im.width,im.height)),w=im.width*k,h=im.height*k,c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.drawImage(im,0,0,w,h);const d=x.getImageData(w*.3,h*.3,w*.4,h*.4).data;let R=0,G=0,B=0,n=0;for(let i=0;i<d.length;i+=16){R+=d[i];G+=d[i+1];B+=d[i+2];n++}URL.revokeObjectURL(im.src);r({c,img:c.toDataURL('image/jpeg',.7),color:r2h(R/n,G/n,B/n)})};im.src=URL.createObjectURL(f)})}
+async function intake(fs){for(const f of fs)Q.push(await prep(f));ask()}
+function ask(){if(!Q.length){save();wardrobe();return}const q=Q[0];$('#app').innerHTML=`<h1>Cos’è questo capo?</h1><p class='s'>Ancora ${Q.length} foto da classificare</p><div class='card'><img src='${q.img}' alt='' style='width:100%;max-height:50vh;object-fit:contain;border-radius:12px'><div class='chips' style='margin-top:12px'>${GL.map((g,i)=>`<button class='chip' onclick='pickG(${i})'>${g[0]}</button>`).join('')}</div><button class='g' style='margin-top:12px' onclick='skipQ()'>Scarta questa foto</button></div>`}
+function skipQ(){Q.shift();ask()}
+async function pickG(i){const q=Q.shift(),g=GL[i];$('#app').innerHTML=`<p class='s'>Analizzo i colori…</p>`;const it={id:Date.now()+''+Math.random().toString(36).slice(2,6),cat:g[1],name:g[0],img:q.img,color:q.color},a=await ai(q.c);
+ if(a){if(/^#[0-9a-f]{6}$/i.test(a.color||''))it.color=a.color.toLowerCase();if(STYLES.includes(a.style))it.st=a.style;if([1,2,3].includes(+a.w))it.w=+a.w}q.c.width=0;S.items.push(it);ask()}
+function wardrobe(){$('#app').innerHTML=`<h1>Il mio armadio</h1><p class='s'>${S.items.length} capi · dopo ogni foto ti chiederò che capo è.</p><div class='card'><div style='display:flex;gap:8px'><button class='p' style='margin:0' onclick='pk(0)'>📷 Scatta foto</button><button class='p' style='margin:0' onclick='pk(1)'>🖼 Dalla galleria</button></div><input type='file' id='fc' accept='image/*' capture='environment' class='hide'><input type='file' id='fg' accept='image/*' multiple class='hide'></div>
+<div class='grid'>${S.items.map(i=>`<div class='it'><img src='${i.img}' alt=''><button class='x' data-i='${i.id}' onclick='del(this.dataset.i)'>×</button><div class='t'><input type='color' value='${i.color}' data-i='${i.id}' onchange='recol(this.dataset.i,this.value)' style='width:22px;height:22px;border:0;padding:0;background:none'><select data-i='${i.id}' onchange='setw(this.dataset.i,this.value)' style='font-size:11px;padding:2px;width:auto'>${[['1','Leggero'],['2','Medio'],['3','Pesante']].map(([v,l])=>`<option value='${v}' ${wv(i)==v?'selected':''}>${l}</option>`).join('')}</select></div><div class='t'>${i.name||i.cat}</div></div>`).join('')}</div>`;
+ ['fc','fg'].forEach(id=>document.getElementById(id).onchange=e=>{const f=[...e.target.files];e.target.value='';if(f.length)intake(f)})}
+function bars(r){const R=(l,a,b,x)=>`<div style='margin:10px 0;font:13px system-ui,sans-serif'><div style='display:flex;justify-content:space-between;color:#8a7a80'><span>${a}</span><b style='color:#3b2f33'>${l}</b><span>${b}</span></div><div style='height:8px;background:#f0e0e4;border-radius:9px;position:relative'><i style='position:absolute;top:-3px;left:calc(${(x+1)*50}% - 7px);width:14px;height:14px;border-radius:50%;background:#d99aa6'></i></div></div>`;
+ return `<div class='card'><b>Come ci siamo arrivate</b><p class='s' style='margin:4px 0'>Il risultato dipende dalle tue risposte: ecco dove ti collocano.</p>${R('Sottotono','Freddo','Caldo',r.t)}${R('Luminosità','Scuro','Chiaro',r.v)}${R('Intensità','Morbido','Brillante',r.c)}</div>`}
+async function camOpen(facing,cb){
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){cb(null);return}
+ let st;try{st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing}},audio:false})}catch(e){cb(null);return}
+ const o=document.createElement('div');o.style.cssText='position:fixed;inset:0;background:#111;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px';
+ o.innerHTML=`<video autoplay playsinline muted style='max-width:100%;max-height:75vh;border-radius:12px'></video><div style='display:flex;gap:10px'><button class='p' style='width:auto;margin:0' id='cs'>📸 Scatta</button><button class='g' id='cx'>Chiudi</button></div>`;
+ document.body.appendChild(o);const v=o.querySelector('video');v.srcObject=st;
+ const stop=()=>{st.getTracks().forEach(t=>t.stop());o.remove()};
+ o.querySelector('#cx').onclick=stop;
+ o.querySelector('#cs').onclick=()=>{const c=document.createElement('canvas');c.width=v.videoWidth||640;c.height=v.videoHeight||480;c.getContext('2d').drawImage(v,0,0,c.width,c.height);c.toBlob(b=>{stop();cb(new File([b],'foto.jpg',{type:'image/jpeg'}))},'image/jpeg',.85)}}
+function pk(i){if(i)document.getElementById('fg').click();else camOpen('environment',f=>{if(f)intake([f]);else document.getElementById('fc').click()})}
+function sfp(i){if(!an.cons){alert('Spunta prima il consenso, poi scatta o carica la foto.');return}if(i)document.getElementById('sf').click();else camOpen('user',f=>{if(f)selfie(f);else document.getElementById('sf').click()})}
+render();
+</script>
+</body>
+</html>
